@@ -1,0 +1,7 @@
+.venv
+*.log
+*.tin
+*.trn
+tmp.txt
+*.cas.h5
+*.cas

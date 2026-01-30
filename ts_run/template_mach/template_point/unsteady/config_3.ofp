@@ -1,0 +1,26 @@
+nstep = 50
+viscous_model = 2
+cfl = 2.5
+inlet_relax_fac = 0.5
+
+fluid_model = 0
+gamma = 1.4
+cp = 1005.0
+viscosity = 1.8e-5
+prandtl_laminar = 0.72
+prandtl_turbulent = 0.9
+kappa2 = 1.0
+kappa4 = 1.0/128.0
+
+if_dts = 1
+ncycle = 3
+nstep_cycle = 100
+frequency = 9.5
+nstep_save = 1
+istep_save_start = 9999999 #(ncycle-1)*nstep_cycle
+
+
+span = 0.762
+
+probe_output=1
+body_force_mode=1
