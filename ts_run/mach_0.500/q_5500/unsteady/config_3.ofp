@@ -23,4 +23,7 @@ istep_save_start = 9999999 #(ncycle-1)*nstep_cycle
 span = 0.762
 
 probe_output=1
+
 body_force_mode=1
+
+custom_secondary_mode=1

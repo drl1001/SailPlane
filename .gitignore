@@ -5,3 +5,13 @@
 tmp.txt
 *.cas.h5
 *.cas
+*.hdf5
+*.xdmf
+log_*.txt
+amgx_log.txt
+perf_log.dat
+halo_pattern.dat
+machine.file.*
+*.submit
+*.out
+stopit

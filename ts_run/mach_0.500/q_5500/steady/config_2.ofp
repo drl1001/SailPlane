@@ -1,0 +1,17 @@
+nstep = 12000
+viscous_model = 2
+cfl = 3.5
+inlet_relax_fac = 0.5
+
+fluid_model = 0
+gamma = 1.4
+cp = 1005.0
+viscosity = 1.8e-5
+prandtl_laminar = 0.72
+prandtl_turbulent = 0.9
+kappa2 = 1.0
+kappa4 = 1.0/128.0
+
+cfl_ramp = 1
+cfl_ramp_nstep = 5000
+cfl_ramp_st = 0.1
