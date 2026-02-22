@@ -1,6 +1,6 @@
-nstep = 20000
-viscous_model = 2
-cfl = 3.5
+nstep = 12000
+viscous_model = 1
+cfl = 1.5
 inlet_relax_fac = 0.5
 
 fluid_model = 0
@@ -13,5 +13,5 @@ kappa2 = 1.0
 kappa4 = 1.0/128.0
 
 cfl_ramp = 1
-cfl_ramp_nstep = 10000
+cfl_ramp_nstep = 5000
 cfl_ramp_st = 0.1

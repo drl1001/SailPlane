@@ -13,10 +13,14 @@ kappa2 = 1.0
 kappa4 = 1.0/128.0
 
 if_dts = 1
-ncycle = 7
+ncycle = 8
 nstep_cycle = 100
 frequency = 9.5
 nstep_save = 1
 istep_save_start = 9999999 #(ncycle-1)*nstep_cycle
+
+
+span = 0.762
+
 probe_output=1
 body_force_mode=1

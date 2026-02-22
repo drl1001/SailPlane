@@ -25,7 +25,7 @@ if __name__ == '__main__':
     pre = True
 
     # name of paraview scripted pre python file
-    pre_name = 'generate_input_1.py'
+    pre_name = 'generate_pre_2.py'
 
 
     # Specify Mach number, velocity and dynamic pressure for each case
@@ -34,14 +34,15 @@ if __name__ == '__main__':
     cases = [
         [0.85, 231.4, 5000.,0.0],
         [0.85, 231.4, 5250.,0.0],
-        [0.5, 170, 5500.,0.0], # Mach 0.5 at 35k ft where air density is 0.38 kg/m3. 0 AOA
-        [0.85, 231.4, 5750.,0.0],
+        [0.5, 170., 5500.,0.0], # Mach 0.5 at 35k ft where air density is 0.38 kg/m3. 0 AOA
+        [0.5, 170., 5750.,0.0],
+        [0.72, 231.4, 5500, 1.0],
         [0.85, 231.4, 6000.,0.0],
     ]
 
     # Specify which cases we wish to run
-    icase_st = 2
-    icase_en = 3
+    icase_st = 4
+    icase_en = 5
 
     # Specify TS executable syntax
     ts_ver = 4310

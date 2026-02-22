@@ -1,4 +1,4 @@
-# Base parameters ommon to all probes
+# Base parameters common to all probes
 base = dict(
     nstep_save_start_1d=0,
     nstep_save_1d=1,
@@ -9,15 +9,51 @@ base = dict(
 
 
 specs = [
+    #Cartesianplanecut
+    dict(name='probe_y_cut1',domain=0,
+    kind='y',value=12, # starting location of gust
+    aname_list=['ro','rovx','rovy', 'rovz', 'roe', 'x', 'y', 'z'],
+    mass_avg_aname_list=['hstag'],
+    area_avg_aname_list=['pstat'],
+    **base),
+    
     #Boundarycellprobe to extract pstat on surface of wing.
-    dict(name='probe_wingSP_surface',domain=0,
+    dict(name='probe_wingSP_main',domain=0,
     kind='bcell',
-    value={'name': 'main_wing_wall'},
+    value={'name': 'main-wing-wall'},
     aname_list=['ro','rovx','rovy','rovz','roe', 'twall_x','x','y','z'],
     mass_avg_aname_list=['hstag','tstag'],
     **base),
 
+    dict(name='probe_wingSP_le',domain=0,
+    kind='bcell',
+    value={'name': 'le-wall'},
+    aname_list=['ro','rovx','rovy','rovz','roe', 'twall_x','x','y','z'],
+    mass_avg_aname_list=['hstag','tstag'],
+    **base),
 
+    dict(name='probe_wingSP_te',domain=0,
+    kind='bcell',
+    value={'name': 'te-wall'},
+    aname_list=['ro','rovx','rovy','rovz','roe', 'twall_x','x','y','z'],
+    mass_avg_aname_list=['hstag','tstag'],
+    **base),
+    
+    dict(name='probe_wingSP_tip',domain=0,
+    kind='bcell',
+    value={'name': 'tip-wall'},
+    aname_list=['ro','rovx','rovy','rovz','roe', 'twall_x','x','y','z'],
+    mass_avg_aname_list=['hstag','tstag'],
+    **base),
+
+    dict(name='probe_wingSP_root',domain=0,
+    kind='bcell',
+    value={'name': 'root-wing-wall'},
+    aname_list=['ro','rovx','rovy','rovz','roe', 'twall_x','x','y','z'],
+    mass_avg_aname_list=['hstag','tstag'],
+    **base),
+
+]
     # #Cartesianplanecut
     # dict(name='probe_y_cut1',domain=0,
     # kind='y',value=4, # LE of wing root
@@ -26,13 +62,6 @@ specs = [
     # area_avg_aname_list=['pstat'],
     # **base),
 
-    #Cartesianplanecut
-    dict(name='probe_y_cut1',domain=0,
-    kind='y',value=10, # starting location of gust
-    aname_list=['ro','rovx','rovy', 'rovz', 'roe', 'x', 'y', 'z'],
-    mass_avg_aname_list=['hstag'],
-    area_avg_aname_list=['pstat'],
-    **base),
 
     # #Cartesianplanecut
     # dict(name='probe_y_cut2',domain=0,
@@ -90,4 +119,3 @@ specs = [
     # area_avg_aname_list=['pstat'],
     # **base),
 
-]

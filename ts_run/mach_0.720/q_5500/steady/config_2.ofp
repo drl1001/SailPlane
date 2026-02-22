@@ -1,6 +1,6 @@
-nstep = 50
+nstep = 22000
 viscous_model = 2
-cfl = 2.5
+cfl = 3.5
 inlet_relax_fac = 0.5
 
 fluid_model = 0
@@ -12,11 +12,6 @@ prandtl_turbulent = 0.9
 kappa2 = 1.0
 kappa4 = 1.0/128.0
 
-if_dts = 1
-ncycle = 7
-nstep_cycle = 100
-frequency = 9.5
-nstep_save = 1
-istep_save_start = 9999999 #(ncycle-1)*nstep_cycle
-probe_output=1
-body_force_mode=1
+cfl_ramp = 1
+cfl_ramp_nstep = 5000
+cfl_ramp_st = 0.1

@@ -22,7 +22,6 @@ def slurm_submit_steady(steady: int, nhour: int):
 
     else:
         print('Steady run needs to be 1 or 2, cannot be anything else.')
-        print(f'You have entered: Steady={steady}, nhours={nhour}')
         sys.exit(1)
     
     print(f'Running command: {cmd}')

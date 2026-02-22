@@ -1,6 +1,4 @@
 import os, sys
-from secondary_functions import read_cvars
-
 
 def slurm_submit_unsteady(nhour: int):
     '''
@@ -24,26 +22,6 @@ def slurm_submit_unsteady(nhour: int):
         print(f'Error in submitting slurm job for Unsteady. Command returned exit code: {run}')
         sys.exit(1)
 
-def init_body_force_setup():
-    '''
-    Runs body_force_setup.py to initialise parameters for body_force_function
-    and zero istep_now. Only runs this function if body_force_mode=1 in config_3.ofp
-    '''
-
-    config3 = read_cvars('config_3.ofp')
-    try:
-        if config3['body_force_mode'] == 1:
-            cmd = 'python body_force_setup.py'
-            print('Initialised body force parameters')
-            os.system(cmd)
-        else:
-            print('body force mode not used')
-            return
-    except KeyError:
-        print('body force mode not used')
-        return
-
-
 def main():
     print(f'Current working directory: {os.getcwd()}')
 
@@ -52,10 +30,6 @@ def main():
         print("Usage: python slurm_unsteady.py <nhour>")
         print("Example: python slurm_unsteady.py 7")
         sys.exit(1)
-    
-    # initialises body force parameters if appropriate, before job submission
-    init_body_force_setup()
-
     # Run submission script
     slurm_submit_unsteady(nhour=sys.argv[1])
 
