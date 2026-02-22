@@ -1,0 +1,7 @@
+numpy
+matplotlib
+scipy
+pandas
+h5py
+jax[cuda12]
+
