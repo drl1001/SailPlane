@@ -275,3 +275,72 @@ def create_H(x : np.ndarray, a : np.ndarray, phi_name : str) -> np.ndarray:
     H = A_fs @ C_ss_inv
 
     return H
+
+
+
+def build_Ms(ms: np.ndarray) -> np.ndarray:
+    '''
+    Build matrix Ms = [Xs Ys Zs] where each column is the x (or y or z)
+    coordinates of the 3D structural GRID nodes.
+
+    Each coordinate column is padded with four zeros at the top:
+
+        Xs = [0, 0, 0, 0, xs]
+        Ys = [0, 0, 0, 0, ys]
+        Zs = [0, 0, 0, 0, zs]
+
+    The four padded zeros are used later to accommodate the linear
+    polynomial term, which allows exact recovery of translation
+    and rotation.
+
+    Parameters
+    ----------
+    ms : numpy.ndarray
+        Array of shape (sn, 3), where sn is the number of structural
+        GRID nodes in the full 3D structure.
+
+        ms = [xs ys zs], where:
+            xs = x-coordinates (sn,)
+            ys = y-coordinates (sn,)
+            zs = z-coordinates (sn,)
+
+    Returns
+    -------
+    Ms : numpy.ndarray
+        Array of shape (4 + sn, 3) defined as:
+
+            Ms = [Xs Ys Zs]
+
+        where each column is padded with four zeros on top.
+    '''
+
+    # ----------------------------
+    # Input validation
+    # ----------------------------
+    if not isinstance(ms, np.ndarray):
+        raise TypeError("ms must be a numpy.ndarray")
+
+    if ms.ndim != 2:
+        raise ValueError("ms must be a 2D array of shape (sn, 3)")
+
+    if ms.shape[1] != 3:
+        raise ValueError(
+            f"ms must have exactly 3 columns (x, y, z). "
+            f"Got shape {ms.shape}."
+        )
+
+    sn = ms.shape[0]
+
+    # ----------------------------
+    # Construct padded matrix
+    # ----------------------------
+    Ms = np.zeros((sn + 4, 3), dtype=ms.dtype)
+
+    # Fill rows 4: with original coordinates
+    Ms[4:, :] = ms
+
+    return Ms
+
+
+
+

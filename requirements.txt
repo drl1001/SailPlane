@@ -1,0 +1,8 @@
+numpy
+matplotlib
+pandas
+scipy
+h5py
+jax[cuda12]
+numba
+pyNastran

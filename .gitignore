@@ -1,4 +1,5 @@
 .venv
+venv/
 *.log
 *.tin
 *.trn
@@ -18,3 +19,4 @@ stopit
 *.sh
 *.csv
 *.dat
+*.npy
