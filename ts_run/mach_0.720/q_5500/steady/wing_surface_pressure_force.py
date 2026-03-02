@@ -27,7 +27,7 @@ if ts_utils_parent not in sys.path:
 from ts_utils.pv_utils.PVDataToNumpy import PVDataToNumpy, SaveSelectedArrays
 
 
-SAVE_ARRAYS = False 
+SAVE_ARRAYS = True 
 
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------
@@ -135,13 +135,16 @@ if __name__ == '__main__':
 
 # save selected arrays: 
 selected_arrays = [
-    'ro',
-    'roe',
-    'rovx',
-    'rovy',
-    'rovz',
-    'p_force',
-    'Points',
+    # 'ro',
+    # 'roe',
+    # 'rovx',
+    # 'rovy',
+    # 'rovz',
+    # 'p_force',
+    # 'Points',
+    'x',
+    'y',
+    'z',
 ]
 
 if SAVE_ARRAYS:

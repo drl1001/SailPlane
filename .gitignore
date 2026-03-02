@@ -20,3 +20,5 @@ stopit
 *.csv
 *.dat
 *.npy
+*.png
+*.html
