@@ -45,6 +45,7 @@ w_ref = gust_config["w_ref"]
 Fg = gust_config["Fg"]
 x_location = gust_config['x_location']
 d = gust_config['d']
+istart = gust_config['istart'] # outer time step when gust starts
 
 # convert H from to meters
 H_m = H * 0.3048
@@ -54,7 +55,7 @@ frequency_gust = V_aircraft / (2 * H_m)
 
 tru_step = 1.0 / (frequency * float(nstep_cycle))
 nstep_outer = nstep_cycle * ncycle # total no. of outer steps
-istart = 85
+# istart = 85
 
 # Precompute gust profile for all steps
 steps = np.arange(nstep_outer)

@@ -80,11 +80,6 @@ def body_force_function(arrays_in, arrays_out):
         pickle.dump(bf_data, f)
 
 
-
-# ========================================
-# OLD BODY FORCE FUNCTIONS, PROB NOT USEFUL ANYMORE
-# included here for reference just in coordinates
-# ========================================
 # def body_force_function(arrays_in, arrays_out):
 #     import numpy as np
 #     import pickle

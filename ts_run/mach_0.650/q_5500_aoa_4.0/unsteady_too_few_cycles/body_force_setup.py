@@ -52,6 +52,12 @@ w0 = (w_ref * Fg * (H / 350.0) ** (1/6.0)) * 0.3048
 vz_amp = w0 / 2.0
 frequency_gust = V_aircraft / (2 * H_m)
 
+# print gust parameters
+print(f'Gust gradient, H (m): {H_m}')
+print(f'Gust intensity, w0 (m/s): {w0}')
+print(f'Gust amplitude, vz_amp (m/s): {vz_amp}')
+print(f'Gust frequency (1/s): {frequency_gust}')
+
 tru_step = 1.0 / (frequency * float(nstep_cycle))
 nstep_outer = nstep_cycle * ncycle # total no. of outer steps
 istart = 85

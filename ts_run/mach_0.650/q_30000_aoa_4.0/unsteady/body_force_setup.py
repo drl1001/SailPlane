@@ -46,7 +46,7 @@ Fg = gust_config["Fg"]
 x_location = gust_config['x_location']
 d = gust_config['d']
 
-# convert H from feet to meters
+# convert H from to meters
 H_m = H * 0.3048
 w0 = (w_ref * Fg * (H / 350.0) ** (1/6.0)) * 0.3048
 vz_amp = w0 / 2.0

@@ -35,14 +35,14 @@ if __name__ == '__main__':
         [0.85, 231.4, 5000.,0.0],
         [0.85, 231.4, 5250.,0.0],
         [0.5, 170., 5500.,0.0], # Mach 0.5 at 35k ft where air density is 0.38 kg/m3. 0 AOA
-        [0.5, 170., 5750.,0.0],
-        [0.72, 231.4, 5500, 1.0],
+        [0.65, 221., 30000.,4.0], # try a subsonic one (hopefully subsonic, as 0.72 goes up to mach 1.1), while allowing TS steady config_2 to converge
+        [0.72, 231.4, 5500, 1.0], # goes transonic at steady state. 
         [0.85, 231.4, 6000.,0.0],
     ]
 
     # Specify which cases we wish to run
-    icase_st = 4
-    icase_en = 5
+    icase_st = 3
+    icase_en = 4
 
     # Specify TS executable syntax
     ts_ver = 4310
@@ -96,16 +96,16 @@ if __name__ == '__main__':
         print(F'Stagnation temperature = {t0}')
         
         
-        # Check if the mach number directory exists
-        dir1 = "mach_%4.3f" % (m, )
+        # Check if the mach number directory exists,
+        dir1 = f"mach_{m:.3f}"
         if os.path.isdir(dir1):
             print("Directory %s already exists" % (dir1, ))
         else:
             print("Making directory %s" % (dir1, ))
             os.makedirs(dir1)
 
-        # Check if the dynamic pressure directory exists
-        dir2 = "%s/q_%i" % (dir1, q)
+        # Check if the dynamic pressure directory exists, also allow for aoa in directory title.
+        dir2 = f"{dir1}/q_{int(q)}_aoa_{alpha:1.1f}"
         if os.path.isdir(dir2):
             print("Directory %s already exists" % (dir2, ))
         else:

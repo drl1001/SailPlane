@@ -1,6 +1,6 @@
 H = 200
-w_ref = 44.0
+w_ref = 80.0
 Fg = 0.735
 x_location = -20
 d = 3
-istart = 40
+

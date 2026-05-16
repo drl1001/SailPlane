@@ -1,6 +1,5 @@
 # state file generated using paraview version 5.13.1
 import paraview
-import math
 paraview.compatibility.major = 5
 paraview.compatibility.minor = 13
 
@@ -9,18 +8,21 @@ from paraview.simple import *
 #### disable automatic camera reset on 'Show'
 paraview.simple._DisableFirstRenderCameraReset()
 
+import numpy as np
+import os, sys
+
 # ----------------------------------------------------------------
 # setup the data processing pipelines
 # ----------------------------------------------------------------
 
 # create a new 'TS Fluent Reader'
-tSFluentReader1 = TSFluentReader(registrationName='TSFluentReader1', Filepath='/home/yl924/Desktop/SailPlane/Mesh/SP_wing_surface_16761386.cas')
+tSFluentReader1 = TSFluentReader(registrationName='TSFluentReader1', Filepath='/home/yl924/Desktop/SailPlane/Mesh/SP_wing_surface_18570013.cas')
 tSFluentReader1.BCprefix = ''
 tSFluentReader1.Readzonenames = 1
 
 # create a new 'TS Select'
 tSSelect1 = TSSelect(registrationName='TSSelect1', Input=tSFluentReader1)
-tSSelect1.BlockIndices = [6, 7, 8, 9, 11, 12]
+tSSelect1.BlockIndices = [6, 7, 8, 10, 11]
 
 # create a new 'TS Set Wall'
 tSSetWall1 = TSSetWall(registrationName='TSSetWall1', Input=tSSelect1)
@@ -28,7 +30,7 @@ tSSetWall1.Walltype = 'Wall function'
 
 # create a new 'TS Select'
 tSSelect2 = TSSelect(registrationName='TSSelect2', Input=tSSetWall1)
-tSSelect2.BlockIndices = [10]
+tSSelect2.BlockIndices = [9]
 
 # create a new 'TS Set Wall'
 tSSetWall2 = TSSetWall(registrationName='TSSetWall2', Input=tSSelect2)
@@ -47,13 +49,14 @@ tSSetFreestream1 = TSSetFreestream(registrationName='TSSetFreestream1', Input=tS
 tSSetFreestream1.Machnumber = float(lines[0].split()[-1])
 tSSetFreestream1.Staticpressure = float(lines[1].split()[-1])
 tSSetFreestream1.Statictemperature = float(lines[2].split()[-1])
-alpha = float(lines[3].split()[-1]) * math.pi / 180
-tSSetFreestream1.Flowxcomponent = math.cos(alpha)
-tSSetFreestream1.Flowzcomponent = math.sin(alpha)
+alpha = float(lines[3].split()[-1]) * np.pi / 180
+tSSetFreestream1.Flowxcomponent = np.cos(alpha)
+tSSetFreestream1.Flowzcomponent = np.sin(alpha)
 
 # create a new 'TS Select'
 tSSelect4 = TSSelect(registrationName='TSSelect4', Input=tSSetFreestream1)
 tSSelect4.BlockIndices = [1]
+
 
 f = open("../initial_flow.dat", "r")
 lines = f.readlines()
@@ -64,8 +67,8 @@ tSSetInitialFlow1 = TSSetInitialFlow(registrationName='TSSetInitialFlow1', Input
 tSSetInitialFlow1.Stagnationenthalpy = float(lines[0].split()[-1])
 tSSetInitialFlow1.Stagnationpressure = float(lines[1].split()[-1])
 V = float(lines[2].split()[-1])
-tSSetInitialFlow1.Vx = V * math.cos(alpha)
-tSSetInitialFlow1.Vz = V * math.sin(alpha)
+tSSetInitialFlow1.Vx = V * np.cos(alpha)
+tSSetInitialFlow1.Vz = V * np.sin(alpha)
 
 # create a new 'TS Select'
 tSSelect5 = TSSelect(registrationName='TSSelect5', Input=tSSetInitialFlow1)
@@ -81,8 +84,18 @@ tSTurbostreamWriter1 = TSTurbostreamWriter(registrationName='TSTurbostreamWriter
 
 # ----------------------------------------------------------------
 tSTurbostreamWriter1.UpdatePipeline()
-# ----------------------------------------------------------------
 
+# ----------------------------------------------------------------
+# # create soft link copies of input_1.hdf5 into steady and unsteady directories
+# os.getcwd()
+# os.chdir('../steady')
+# cmd = "rm -f input_1.hdf5 && ln -s ../pre/input_1.hdf5 ."
+# os.system(cmd)
+
+# os.getcwd()
+# os.chdir('../unsteady')
+# cmd = "rm -f input_1.hdf5 && ln -s ../pre/input_1.hdf5 ."
+# os.system(cmd)
 
 ##--------------------------------------------
 ## You may need to add some code at the end of this python script depending on your usage, eg:
