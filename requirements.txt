@@ -6,3 +6,6 @@ h5py
 jax[cuda12]
 numba
 pyNastran
+ts_utils @ git+https://github.com/drl1001/ts_utils.git
+pyvista
+kaleido

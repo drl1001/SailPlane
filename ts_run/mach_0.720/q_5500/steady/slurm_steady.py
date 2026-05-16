@@ -1,6 +1,6 @@
 import os, sys
 
-def slurm_submit_steady(steady: int, nhour: int):
+def slurm_submit_steady(steady, nhour):
     '''
     Slurm submission script for steady runs
 
