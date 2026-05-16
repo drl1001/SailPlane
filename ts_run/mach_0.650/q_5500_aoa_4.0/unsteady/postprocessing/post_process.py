@@ -29,7 +29,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # pv_utils — pure-numpy helpers (no ParaView dependency)
-from pv_utils import (
+from ts_utils.pv_utils import (
     load_probed_coords,
     load_probed_primary_vars,
     load_probed_var,  # noqa: F401  -- kept for convenience when extending this script
@@ -43,7 +43,7 @@ from pv_utils import (
     plot_var_vs_distance,
 )
 # pv_utils — ParaView-dependent (must run under pvpython)
-from pv_utils.probe_xdmf import extract_cell_props
+from ts_utils.pv_utils.probe_xdmf import extract_cell_props, verify_probe_alignment
 
 
 # =============================================================================
@@ -53,7 +53,17 @@ RUN_DIR        = '.'                 # working directory containing probe_out.xd
 POST_DIR       = './post-processing' # where the .npy probe files live (and outputs go)
 XDMF_FILE      = os.path.join(RUN_DIR, 'probe_out.xdmf')
 
-PROBE_WING     = 'wing_surface_pstat'  # surface probe used for forces
+# Surface probes whose union is the full wing. Order MUST match on the
+# ParaView side and the .npy side — node i in Normals/Area corresponds
+# to node i in the loaded probe arrays.
+PROBE_WING     = [
+    'wing_le',
+    'wing_te',
+    'wing_tip',
+    'wing_root',
+    'wing_main',
+    'wing_whole',
+]
 PROBE_Y        = 'y_cut1'              # sample probe for pressure time-series
 TARGET_STATION = (31.24, 10.88, 4.62)  # (x, y, z) of point of interest
 
@@ -79,7 +89,18 @@ BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 # =============================================================================
 # 1. Cell properties from probe_out.xdmf  (ParaView)
 # =============================================================================
-print('Extracting cell Normals and Area from probe_out.xdmf ...')
+# Up-front sanity check: every probe named in PROBE_WING must have a
+# matching .npy file with the same node count as the xdmf surface block.
+# Catches typos in the probe list, a wrong probe_out.xdmf file, or a
+# probe list that has drifted out of sync with what was probed.
+print('Verifying probe alignment between xdmf and .npy files ...')
+verify_probe_alignment(XDMF_FILE, POST_DIR, PROBE_WING)
+
+# When PROBE_WING is a list, each probe is extracted on its own and the
+# per-probe Normals/Area are concatenated in PROBE_WING order — the same
+# order the .npy loaders below will use.
+print(f'Extracting cell Normals and Area from {len(PROBE_WING) if isinstance(PROBE_WING, list) else 1} '
+      f'probe(s) in probe_out.xdmf ...')
 pv_data = extract_cell_props(XDMF_FILE, probe_name=PROBE_WING)
 normals = pv_data['Normals']
 area    = pv_data['Area']
@@ -87,12 +108,22 @@ print(f'  Normals: {normals.shape}   Area: {area.shape}')
 
 
 # =============================================================================
-# 2. Probed primary variables + coords on the wing surface
+# 2. Probed primary variables + coords on the (combined) wing surface
 # =============================================================================
+# Same PROBE_WING list -> identical node ordering as the Normals/Area above.
 x, y, z = load_probed_coords(POST_DIR, PROBE_WING)
 prim    = load_probed_primary_vars(POST_DIR, PROBE_WING)
 nt, nn  = x.shape
-print(f'Wing probe: nt={nt}, nn={nn}')
+print(f'Wing surface (combined): nt={nt}, nn={nn}')
+
+# Sanity check: node counts must agree between the ParaView side and
+# the saved probe data — otherwise the concatenation order is broken.
+if nn != normals.shape[0]:
+    raise RuntimeError(
+        f'Node-count mismatch: combined probe .npy files have nn={nn} but '
+        f'extracted Normals have {normals.shape[0]}. Make sure PROBE_WING '
+        f'lists the same probes (in the same order) as were saved to .npy.'
+    )
 
 
 # =============================================================================
