@@ -24,7 +24,6 @@ edit only the CONFIG block at the top.
 """
 
 import os
-
 import numpy as np
 import matplotlib.pyplot as plt
 
