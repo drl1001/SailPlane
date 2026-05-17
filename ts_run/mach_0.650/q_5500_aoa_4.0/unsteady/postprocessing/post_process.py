@@ -92,11 +92,24 @@ BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 # When PROBE_WING is a list, each probe is extracted on its own and the
 # per-probe Normals/Area are concatenated in PROBE_WING order — the same
 # order the .npy loaders below will use.
-print(f'Extracting cell Normals and Area from {len(PROBE_WING) if isinstance(PROBE_WING, list) else 1} '
-      f'probe(s) in probe_out.xdmf ...')
-pv_data = extract_cell_props(XDMF_FILE, probe_name=PROBE_WING)
-normals = pv_data['Normals']
-area    = pv_data['Area']
+# Cache normals/area as .npy so subsequent runs skip the ParaView extraction.
+NORMALS_CACHE = os.path.join(POST_DIR, 'normals.npy')
+AREA_CACHE    = os.path.join(POST_DIR, 'area.npy')
+
+if os.path.exists(NORMALS_CACHE) and os.path.exists(AREA_CACHE):
+    print('Loading cached Normals and Area from .npy files ...')
+    normals = np.load(NORMALS_CACHE)
+    area    = np.load(AREA_CACHE)
+else:
+    print(f'Extracting cell Normals and Area from {len(PROBE_WING) if isinstance(PROBE_WING, list) else 1} '
+          f'probe(s) in probe_out.xdmf ...')
+    pv_data = extract_cell_props(XDMF_FILE, probe_name=PROBE_WING)
+    normals = pv_data['Normals']
+    area    = pv_data['Area']
+    np.save(NORMALS_CACHE, normals)
+    np.save(AREA_CACHE, area)
+    print(f'  Saved normals.npy and area.npy to {POST_DIR}')
+
 print(f'  Normals: {normals.shape}   Area: {area.shape}')
 
 
