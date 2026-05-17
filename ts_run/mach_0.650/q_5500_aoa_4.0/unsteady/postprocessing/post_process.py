@@ -89,13 +89,6 @@ BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 # =============================================================================
 # 1. Cell properties from probe_out.xdmf  (ParaView)
 # =============================================================================
-# Up-front sanity check: every probe named in PROBE_WING must have a
-# matching .npy file with the same node count as the xdmf surface block.
-# Catches typos in the probe list, a wrong probe_out.xdmf file, or a
-# probe list that has drifted out of sync with what was probed.
-print('Verifying probe alignment between xdmf and .npy files ...')
-verify_probe_alignment(XDMF_FILE, POST_DIR, PROBE_WING)
-
 # When PROBE_WING is a list, each probe is extracted on its own and the
 # per-probe Normals/Area are concatenated in PROBE_WING order — the same
 # order the .npy loaders below will use.
@@ -115,6 +108,10 @@ x, y, z = load_probed_coords(POST_DIR, PROBE_WING)
 prim    = load_probed_primary_vars(POST_DIR, PROBE_WING)
 nt, nn  = x.shape
 print(f'Wing surface (combined): nt={nt}, nn={nn}')
+
+# Verify probe alignment now that .npy files exist
+print('Verifying probe alignment between xdmf and .npy files ...')
+verify_probe_alignment(XDMF_FILE, POST_DIR, PROBE_WING)
 
 # Sanity check: node counts must agree between the ParaView side and
 # the saved probe data — otherwise the concatenation order is broken.
