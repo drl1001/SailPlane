@@ -45,8 +45,17 @@ Q       = 5500.0    # dynamic pressure  [Pa]
 S       = 154.0     # reference area    [m^2] (one wing, as CFD models one wing)
 C_MEAN  = 6.535     # mean aerodynamic chord [m]
 
+# Read gust gradient H from gust_config.ofp for legend labels
+GUST_CONFIG = './gust_config.ofp'
+with open(GUST_CONFIG) as f:
+    for line in f:
+        if line.startswith('H'):
+            H_gust = int(line.split('=')[1].strip())
+            break
+GUST_LABEL = f'H = {H_gust} ft'
+
 # Output filenames
-CASE_TAG    = 'm0650_q5500_aoa4_H100'
+CASE_TAG    = f'm0650_q5500_aoa4_H{H_gust}'
 CL_OUTFILE  = os.path.join(POST_DIR, f'C_L_{CASE_TAG}.npy')
 BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 
@@ -109,14 +118,6 @@ print(f'  BM_norm range: [{BM_norm.min():.4f}, {BM_norm.max():.4f}],  mean: {BM_
 # =============================================================================
 # 3. Plots
 # =============================================================================
-# Read gust gradient H from gust_config.ofp for legend labels
-GUST_CONFIG = './gust_config.ofp'
-with open(GUST_CONFIG) as f:
-    for line in f:
-        if line.startswith('H'):
-            H_gust = int(line.split('=')[1].strip())
-            break
-GUST_LABEL = f'H = {H_gust} ft'
 
 # Change relative to steady state (timestep 0) to isolate gust effect
 dC_L    = C_L - C_L[0]
