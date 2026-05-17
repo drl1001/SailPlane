@@ -41,8 +41,6 @@ from ts_utils.pv_utils import (
     plot_series,
     plot_var_vs_distance,
 )
-# pv_utils — ParaView-dependent (must run under pvpython)
-from ts_utils.pv_utils.probe_xdmf import extract_cell_props, verify_probe_alignment
 
 
 # =============================================================================
@@ -87,29 +85,24 @@ BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 
 
 # =============================================================================
-# 1. Cell properties from probe_out.xdmf  (ParaView)
+# 1. Load Normals and Area (pre-computed by extract_normals_area.py)
 # =============================================================================
-# When PROBE_WING is a list, each probe is extracted on its own and the
-# per-probe Normals/Area are concatenated in PROBE_WING order — the same
-# order the .npy loaders below will use.
-# Cache normals/area as .npy so subsequent runs skip the ParaView extraction.
-NORMALS_CACHE = os.path.join(POST_DIR, 'normals.npy')
-AREA_CACHE    = os.path.join(POST_DIR, 'area.npy')
+# extract_normals_area.py selects all wing probe blocks at once in ParaView,
+# extracts surface normals and cell areas, and saves them as .npy files.
+# This avoids per-probe concatenation issues with node counts.
+NORMALS_PATH = os.path.join(POST_DIR, 'normals.npy')
+AREA_PATH    = os.path.join(POST_DIR, 'area.npy')
 
-if os.path.exists(NORMALS_CACHE) and os.path.exists(AREA_CACHE):
-    print('Loading cached Normals and Area from .npy files ...')
-    normals = np.load(NORMALS_CACHE)
-    area    = np.load(AREA_CACHE)
-else:
-    print(f'Extracting cell Normals and Area from {len(PROBE_WING) if isinstance(PROBE_WING, list) else 1} '
-          f'probe(s) in probe_out.xdmf ...')
-    pv_data = extract_cell_props(XDMF_FILE, probe_name=PROBE_WING)
-    normals = pv_data['Normals']
-    area    = pv_data['Area']
-    np.save(NORMALS_CACHE, normals)
-    np.save(AREA_CACHE, area)
-    print(f'  Saved normals.npy and area.npy to {POST_DIR}')
+if not os.path.exists(NORMALS_PATH) or not os.path.exists(AREA_PATH):
+    raise FileNotFoundError(
+        f'normals.npy and/or area.npy not found in {POST_DIR}. '
+        f'Run extract_normals_area.py first:\n'
+        f'  pvpython ./postprocessing/extract_normals_area.py'
+    )
 
+print('Loading Normals and Area from .npy files ...')
+normals = np.load(NORMALS_PATH)
+area    = np.load(AREA_PATH)
 print(f'  Normals: {normals.shape}   Area: {area.shape}')
 
 
