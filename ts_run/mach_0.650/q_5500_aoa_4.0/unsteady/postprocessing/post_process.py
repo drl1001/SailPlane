@@ -109,10 +109,6 @@ prim    = load_probed_primary_vars(POST_DIR, PROBE_WING)
 nt, nn  = x.shape
 print(f'Wing surface (combined): nt={nt}, nn={nn}')
 
-# Verify probe alignment now that .npy files exist
-print('Verifying probe alignment between xdmf and .npy files ...')
-verify_probe_alignment(XDMF_FILE, POST_DIR, PROBE_WING)
-
 # Sanity check: node counts must agree between the ParaView side and
 # the saved probe data — otherwise the concatenation order is broken.
 if nn != normals.shape[0]:
