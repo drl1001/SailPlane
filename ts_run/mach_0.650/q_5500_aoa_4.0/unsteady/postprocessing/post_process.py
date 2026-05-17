@@ -55,29 +55,30 @@ XDMF_FILE      = os.path.join(RUN_DIR, 'probe_out.xdmf')
 # Surface probes whose union is the full wing. Order MUST match on the
 # ParaView side and the .npy side — node i in Normals/Area corresponds
 # to node i in the loaded probe arrays.
+# PROBE NAMES that make up the wing surface:
 PROBE_WING     = [
-    'wing_le',
-    'wing_te',
-    'wing_tip',
-    'wing_root',
-    'wing_main',
-    'wing_whole',
+    'probe_le',
+    'probe_wing_middle',
+    'probe_main_wing',
+    'probe_root_wing',
+    'probe_te',
+    'probe_tip',
 ]
-PROBE_Y        = 'y_cut1'              # sample probe for pressure time-series
-TARGET_STATION = (31.24, 10.88, 4.62)  # (x, y, z) of point of interest
+PROBE_Y        = 'probe_y_cut1'              # sample probe for pressure time-series
+TARGET_STATION = (8.2126, 6.9943, 0.397874)  # (x, y, z) of point of interest # on upper surface, about 1/3 chord-length from LE. Similar to station 1 location in Bartels_aiaa_gust paper.
 
 # Gust-decay sampling on the y=const cut probe.
 # A and B bracket the streamwise path the gust travels: A at the gust
 # source plane, B at the wing leading edge (both at the cut's y value).
-GUST_SOURCE_XYZ = (0.00, 10.88, 4.62)
-WING_LE_XYZ     = (28.50, 10.88, 4.62)
+GUST_SOURCE_XYZ = (-18.42,6.791,-0.6665) # this is a gust source node, found from thin_strip_coord.csv (line 72)
+WING_LE_XYZ     =  TARGET_STATION # SAME STATION ON wing upper surface
 LINE_TOL        = 0.5     # max perpendicular distance (m) to keep a node
-DECAY_SNAPSHOTS = (0, 25, 50, 75, 100)   # timestep indices to overlay
+DECAY_SNAPSHOTS = (60, 300, 400, 500, 600, 700)   # timestep indices to overlay
 
 # Flow conditions / wing reference geometry
 Q       = 5500.0    # dynamic pressure  [Pa]
-S       = 191.84    # reference area    [m^2]
-C_MEAN  = 7.0       # reference chord   [m]
+S       = 154.0    # reference area    [m^2] area of one wing, as CFD only models one wing.
+C_MEAN  = 6.535        # reference chord   [m]
 
 # Output filenames — encode the case so multiple cases can coexist
 CASE_TAG    = 'm0650_q5500_aoa4'
