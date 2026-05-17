@@ -21,9 +21,9 @@ Output (all saved to ./post-processing/):
     rovz.npy       (nt, nn)     — z-momentum
     roe.npy        (nt, nn)     — total energy
     twall_x.npy    (nt, nn)     — wall shear stress x
-    x.npy          (nt, nn)     — x coordinates
-    y.npy          (nt, nn)     — y coordinates
-    z.npy          (nt, nn)     — z coordinates
+    x.npy          (nn,)        — x coordinates (static, first timestep only)
+    y.npy          (nn,)        — y coordinates (static, first timestep only)
+    z.npy          (nn,)        — z coordinates (static, first timestep only)
 """
 
 import os
@@ -60,10 +60,11 @@ PROBE_SELECTORS = [
     '/Root/probe_wing_middle',
 ]
 
-# Scalar variables to extract at every timestep.
-# These are the PointArrays available in the XDMF reader — they come from
-# Turbostream's probe output and are stored per-node at every saved timestep.
-SCALAR_VARS = ['pstat', 'ro', 'rovx', 'rovy', 'rovz', 'roe', 'twall_x', 'x', 'y', 'z']
+# Time-varying scalar variables to extract at every timestep.
+TIME_VARS = ['pstat', 'ro', 'rovx', 'rovy', 'rovz', 'roe', 'twall_x']
+
+# Static scalar variables — coordinates don't change, only extract at first timestep.
+STATIC_VARS = ['x', 'y', 'z']
 
 # =============================================================================
 # PIPELINE CONSTRUCTION
@@ -155,12 +156,19 @@ print('\nArrays available at first timestep:')
 for key, arr in pv_data.items():
     print(f'  {key}: {arr.shape}')
 
-# Normals and Area are static (geometry doesn't change between timesteps)
-# so we only need to extract them once.
+# Normals, Area, and coordinates are static (geometry doesn't change between
+# timesteps) so we only need to extract them once from the first timestep.
 normals = pv_data['Normals']
 area    = pv_data['Area']
 nn = normals.shape[0]
 print(f'\nnn = {nn}, nt = {nt}')
+
+# Extract static coordinate arrays (nn,) from first timestep only
+static_arrays = {}
+for var in STATIC_VARS:
+    if var in pv_data:
+        static_arrays[var] = pv_data[var]
+        print(f'  {var} (static): {pv_data[var].shape}')
 
 # =============================================================================
 # LOOP OVER ALL TIMESTEPS — extract time-varying arrays
@@ -175,7 +183,7 @@ print(f'\nnn = {nn}, nt = {nt}')
 
 # Pre-allocate output arrays
 p_force_all = np.zeros((nt, nn, 3))
-scalars = {var: np.zeros((nt, nn)) for var in SCALAR_VARS}
+scalars = {var: np.zeros((nt, nn)) for var in TIME_VARS}
 
 print(f'\nExtracting data over {nt} timesteps ...')
 
@@ -193,7 +201,7 @@ for i, t in enumerate(timesteps):
     p_force_all[i] = pv_data['p_force']
 
     # Store each scalar variable for this timestep
-    for var in SCALAR_VARS:
+    for var in TIME_VARS:
         if var in pv_data:
             scalars[var][i] = pv_data[var]
 
@@ -217,8 +225,13 @@ np.save(os.path.join(POST_DIR, 'p_force.npy'), p_force_all)
 print(f'Saved p_force.npy  {p_force_all.shape}')
 
 # Time-varying scalar fields: each (nt, nn)
-for var in SCALAR_VARS:
+for var in TIME_VARS:
     np.save(os.path.join(POST_DIR, f'{var}.npy'), scalars[var])
     print(f'Saved {var}.npy     {scalars[var].shape}')
+
+# Static coordinate arrays: each (nn,) — extracted from first timestep only
+for var in STATIC_VARS:
+    np.save(os.path.join(POST_DIR, f'{var}.npy'), static_arrays[var])
+    print(f'Saved {var}.npy     {static_arrays[var].shape}')
 
 print(f'\nDone. All arrays saved to {POST_DIR}')
