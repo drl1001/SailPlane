@@ -1,182 +1,132 @@
 """
 post_process.py
 
-Example post-processing script using the ``pv_utils`` package.
+Post-processing script for unsteady wing surface probe data.
 
 Run this from the unsteady run directory with::
 
-    pvpython postprocessing/post_process.py
+    python postprocessing/post_process.py
+
+Prerequisites:
+    1. pvpython ./postprocessing/extract_normals_area.py
+       (extracts normals, area, p_force, pstat, ro, rovx, ..., x, y, z
+        from probe_out.xdmf at all timesteps)
 
 What it does
 ------------
-1.  Reads ``probe_out.xdmf`` via ParaView and recovers the per-point
-    ``Normals`` and ``Area`` arrays for the wing surface probe.
-2.  Loads the previously-saved ``.npy`` probe arrays (ro, rovx, ..., x, y, z).
-3.  Computes pstat, the per-node pressure force vector, the total lift
-    coefficient, and the root bending moment time history.
-4.  Plots a pressure time-series at a chosen target station, plus the
-    C_L and root BM histories.
-5.  Saves the C_L and normalised root BM as ``.npy`` files for later
-    comparison between cases.
+1. Loads the pre-extracted .npy arrays from ./post-processing/
+    NB, ./post-processing/ contains the probed data for the
+    WING SURFACE, not the y=constant probes
+2. Computes lift coefficient C_L and root bending moment coefficient
+3. Plots C_L and BM time histories
+4. Saves C_L and normalised root BM as .npy files
 
-To process a different case (different Mach, dynamic pressure, AoA, ...),
-edit only the CONFIG block at the top.
+No ParaView dependency — runs with plain Python.
 """
 
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-# pv_utils — pure-numpy helpers (no ParaView dependency)
 from ts_utils.pv_utils import (
-    load_probed_coords,
-    load_probed_primary_vars,
-    load_probed_var,  # noqa: F401  -- kept for convenience when extending this script
-    compute_pstat,
-    compute_pressure_force,
     compute_lift_coefficient,
     compute_root_bending_moment,
     normalise_bending_moment,
-    plot_time_series_at_point,
     plot_series,
-    plot_var_vs_distance,
 )
-
 
 # =============================================================================
 # CONFIG — edit per case
 # =============================================================================
-RUN_DIR        = '.'                 # working directory containing probe_out.xdmf
-POST_DIR       = './post-processing' # where the .npy probe files live (and outputs go)
-XDMF_FILE      = os.path.join(RUN_DIR, 'probe_out.xdmf')
-
-# Surface probes whose union is the full wing. Order MUST match on the
-# ParaView side and the .npy side — node i in Normals/Area corresponds
-# to node i in the loaded probe arrays.
-# PROBE NAMES that make up the wing surface:
-PROBE_WING     = [
-    'probe_le',
-    'probe_wing_middle',
-    'probe_main_wing',
-    'probe_root_wing',
-    'probe_te',
-    'probe_tip',
-]
-PROBE_Y        = 'probe_y_cut1'              # sample probe for pressure time-series
-TARGET_STATION = (8.2126, 6.9943, 0.397874)  # (x, y, z) of point of interest # on upper surface, about 1/3 chord-length from LE. Similar to station 1 location in Bartels_aiaa_gust paper.
-
-# Gust-decay sampling on the y=const cut probe.
-# A and B bracket the streamwise path the gust travels: A at the gust
-# source plane, B at the wing leading edge (both at the cut's y value).
-GUST_SOURCE_XYZ = (-18.42,6.791,-0.6665) # this is a gust source node, found from thin_strip_coord.csv (line 72)
-WING_LE_XYZ     =  TARGET_STATION # SAME STATION ON wing upper surface
-LINE_TOL        = 0.5     # max perpendicular distance (m) to keep a node
-DECAY_SNAPSHOTS = (60, 300, 400, 500, 600, 700)   # timestep indices to overlay
+POST_DIR = './post-processing'
 
 # Flow conditions / wing reference geometry
 Q       = 5500.0    # dynamic pressure  [Pa]
-S       = 154.0    # reference area    [m^2] area of one wing, as CFD only models one wing.
-C_MEAN  = 6.535        # reference chord   [m]
+S       = 154.0     # reference area    [m^2] (one wing, as CFD models one wing)
+C_MEAN  = 6.535     # mean aerodynamic chord [m]
 
-# Output filenames — encode the case so multiple cases can coexist
-CASE_TAG    = 'm0650_q5500_aoa4'
+# Output filenames
+CASE_TAG    = 'm0650_q5500_aoa4_H200'
 CL_OUTFILE  = os.path.join(POST_DIR, f'C_L_{CASE_TAG}.npy')
 BM_OUTFILE  = os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.npy')
 
+# Matplotlib font sizes
+plt.rcParams.update({
+    'font.size': 18,
+    'axes.titlesize': 24,
+    'axes.labelsize': 22,
+    'xtick.labelsize': 18,
+    'ytick.labelsize': 18,
+    'legend.fontsize': 18,
+})
 
 # =============================================================================
-# 1. Load Normals and Area (pre-computed by extract_normals_area.py)
+# 1. Load pre-extracted arrays
 # =============================================================================
-# extract_normals_area.py selects all wing probe blocks at once in ParaView,
-# extracts surface normals and cell areas, and saves them as .npy files.
-# This avoids per-probe concatenation issues with node counts.
-NORMALS_PATH = os.path.join(POST_DIR, 'normals.npy')
-AREA_PATH    = os.path.join(POST_DIR, 'area.npy')
+# These are saved by extract_normals_area.py which runs the full ParaView
+# pipeline (all wing probes selected at once) and loops over all timesteps.
+print('Loading pre-extracted arrays from', POST_DIR)
 
-if not os.path.exists(NORMALS_PATH) or not os.path.exists(AREA_PATH):
-    raise FileNotFoundError(
-        f'normals.npy and/or area.npy not found in {POST_DIR}. '
-        f'Run extract_normals_area.py first:\n'
-        f'  pvpython ./postprocessing/extract_normals_area.py'
-    )
+p_force = np.load(os.path.join(POST_DIR, 'p_force.npy'))  # (nt, nn, 3)
+y_raw   = np.load(os.path.join(POST_DIR, 'y.npy'))        # (nn,) or (nt, nn)
 
-print('Loading Normals and Area from .npy files ...')
-normals = np.load(NORMALS_PATH)
-area    = np.load(AREA_PATH)
-print(f'  Normals: {normals.shape}   Area: {area.shape}')
+# y may be (nt, nn) if extracted at all timesteps, or (nn,) if static.
+# Either way, the geometry is static so take first timestep if needed.
+if y_raw.ndim == 2:
+    y = y_raw[0]
+else:
+    y = y_raw
 
-
-# =============================================================================
-# 2. Probed primary variables + coords on the (combined) wing surface
-# =============================================================================
-# Same PROBE_WING list -> identical node ordering as the Normals/Area above.
-x, y, z = load_probed_coords(POST_DIR, PROBE_WING)
-prim    = load_probed_primary_vars(POST_DIR, PROBE_WING)
-nt, nn  = x.shape
-print(f'Wing surface (combined): nt={nt}, nn={nn}')
-
-# Sanity check: node counts must agree between the ParaView side and
-# the saved probe data — otherwise the concatenation order is broken.
-if nn != normals.shape[0]:
-    raise RuntimeError(
-        f'Node-count mismatch: combined probe .npy files have nn={nn} but '
-        f'extracted Normals have {normals.shape[0]}. Make sure PROBE_WING '
-        f'lists the same probes (in the same order) as were saved to .npy.'
-    )
-
+nt, nn, _ = p_force.shape
+print(f'  p_force: {p_force.shape}  (nt={nt}, nn={nn})')
+print(f'  y:       {y.shape}')
 
 # =============================================================================
-# 3. Pressure, lift, root bending moment
+# 2. Compute C_L and BM (or load from cache if already computed)
 # =============================================================================
-pstat = compute_pstat(prim['ro'], prim['rovx'], prim['rovy'], prim['rovz'], prim['roe'])
-F     = compute_pressure_force(pstat, area, normals)   # (nt, nn, 3)
+if os.path.exists(CL_OUTFILE) and os.path.exists(BM_OUTFILE):
+    print(f'\nLoading cached results from {CL_OUTFILE} and {BM_OUTFILE}')
+    C_L     = np.load(CL_OUTFILE)
+    BM_norm = np.load(BM_OUTFILE)
+else:
+    # C_L from the z-component of total pressure force (lift direction = z)
+    C_L = compute_lift_coefficient(p_force, q=Q, S=S, lift_axis=2)
 
-C_L     = compute_lift_coefficient(F, q=Q, S=S)
-BM      = compute_root_bending_moment(F, y)             # (nt, 3)
-BM_mag  = np.linalg.norm(BM, axis=1)
-BM_norm = normalise_bending_moment(BM_mag, q=Q, S=S, c_mean=C_MEAN)
+    # Bending moment about the wing root (minimum y location)
+    BM      = compute_root_bending_moment(p_force, y)   # (nt, 3)
+    BM_mag  = np.linalg.norm(BM, axis=1)                # (nt,)
+    BM_norm = normalise_bending_moment(BM_mag, q=Q, S=S, c_mean=C_MEAN)
 
-os.makedirs(POST_DIR, exist_ok=True)
-np.save(CL_OUTFILE, C_L)
-np.save(BM_OUTFILE, BM_norm)
-print(f'Saved {CL_OUTFILE} and {BM_OUTFILE}')
+    # Save
+    np.save(CL_OUTFILE, C_L)
+    np.save(BM_OUTFILE, BM_norm)
+    print(f'\nSaved {CL_OUTFILE}')
+    print(f'Saved {BM_OUTFILE}')
 
-
-# =============================================================================
-# 4. Diagnostic plots
-# =============================================================================
-plot_series(C_L,    ylabel='$C_L$',                  title='Total lift coefficient',     label='C_L',           show=False)
-plot_series(BM_norm,ylabel='Normalised root BM',     title='Root bending moment',        label='root BM (norm)',show=False)
-
-# Pressure time-series at the target station (from the y-cut probe)
-x2, y2, z2 = load_probed_coords(POST_DIR, PROBE_Y)
-prim_y     = load_probed_primary_vars(POST_DIR, PROBE_Y)
-pstat_y    = compute_pstat(prim_y['ro'], prim_y['rovx'], prim_y['rovy'], prim_y['rovz'], prim_y['roe'])
-
-plot_time_series_at_point(
-    var=pstat_y, var_name='pstat',
-    x=x2, y=y2, z=z2,
-    target_coords=TARGET_STATION,
-    normalisation=Q,        # plot (pstat - pstat[0]) / q
-    show=False,
-)
-
+print(f'  C_L range: [{C_L.min():.4f}, {C_L.max():.4f}],  mean: {C_L.mean():.4f}')
+print(f'  BM_norm range: [{BM_norm.min():.4f}, {BM_norm.max():.4f}],  mean: {BM_norm.mean():.4f}')
 
 # =============================================================================
-# 5. Spatial decay of rovz between gust source and wing LE (y=const cut)
+# 3. Plots
 # =============================================================================
-# Sample rovz along the line from the gust-source plane to the wing
-# leading edge at several timesteps to see how the gust signature
-# attenuates as it convects toward the wing.
-rovz_y = prim_y['rovz']
-plot_var_vs_distance(
-    var=rovz_y, var_name='rovz',
-    x=x2, y=y2, z=z2,
-    start=GUST_SOURCE_XYZ, end=WING_LE_XYZ,
-    time_indices=DECAY_SNAPSHOTS,
-    tol=LINE_TOL,
-    relative_to_initial=True,   # show perturbation from the steady state
-    show=False,
-)
+# Read gust gradient H from gust_config.ofp for legend labels
+GUST_CONFIG = './gust_config.ofp'
+with open(GUST_CONFIG) as f:
+    for line in f:
+        if line.startswith('H'):
+            H_gust = int(line.split('=')[1].strip())
+            break
+GUST_LABEL = f'H = {H_gust} ft'
 
-plt.show()
+# Change relative to steady state (timestep 0) to isolate gust effect
+dC_L    = C_L - C_L[0]
+dBM_norm = -BM_norm - (-BM_norm[0])
+
+plot_series(dC_L, ylabel=r'$\Delta C_L$', title='Change in lift', label=GUST_LABEL, show=False)
+plt.savefig(os.path.join(POST_DIR, f'C_L_{CASE_TAG}.png'), dpi=150, bbox_inches='tight')
+print(f'Saved C_L plot')
+
+# Negate BM for plotting: convention is sagging moment = negative
+plot_series(dBM_norm, ylabel=r'$\Delta C_{M,root}$', title='Change in root bending moment', label=GUST_LABEL, show=False)
+plt.savefig(os.path.join(POST_DIR, f'rootBM_{CASE_TAG}.png'), dpi=150, bbox_inches='tight')
+print(f'Saved root BM plot')
