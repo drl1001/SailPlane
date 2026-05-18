@@ -60,7 +60,7 @@ GUST_LABEL = f'H = {H_gust} ft'
 # =============================================================================
 # CONFIG
 # =============================================================================
-POST_DIR = './post-processing'
+POST_DIR = './post-processing/probe_y_cut1'
 PROBE_NAME = 'probe_y_cut1'
 
 # Flow conditions

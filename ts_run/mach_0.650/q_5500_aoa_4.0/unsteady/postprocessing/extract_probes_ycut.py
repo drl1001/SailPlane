@@ -11,7 +11,7 @@ Run this BEFORE post_process_ycut.py:
 from ts_utils.pv_utils import extract_probes
 
 HDF5_FILE = './probe_out.hdf5'
-POST_DIR  = './post-processing'
+POST_DIR  = './post-processing/probe_y_cut1'
 
 # Plane-cut probes only (wing surface probes handled by extract_normals_area.py)
 PROBES_YCUT = ['probe_y_cut1']
